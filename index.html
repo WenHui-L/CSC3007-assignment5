@@ -4,14 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.css" />
-	        <script src="https://cdn.onemap.sg/leaflet/onemap-leaflet.js"></script>
-
+    <script src="https://cdn.onemap.sg/leaflet/onemap-leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
     <style>
         #map {
             width: 1000px;
             height: 600px;
         }
+
+        .class {
+            color: black;
+            font-size: 15px;
+            background-color: transparent !important;
+            ;
+            background-image: transparent;
+        }
     </style>
+
 </head>
 
 <body>
@@ -19,20 +31,92 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.js"></script>
     <script>
-           var basemap = L.tileLayer('https://maps-{s}.onemap.sg/v3/Original/{z}/{x}/{y}.png', {
-          detectRetina: true,
-          maxZoom: 18,
-          minZoom: 11,
-          //Do not remove this attribution
-          attribution: '<img src="https://www.onemap.gov.sg/docs/maps/images/oneMap64-01.png" style="height:20px;width:20px;"/> OneMap | Map data &copy; contributors, <a href="http://SLA.gov.sg">Singapore Land Authority</a>'
+        $(document).ready(function () {
+            let url_api = 'https://api.data.gov.sg/v1/environment/psi'
+            $.ajax({
+                url: url_api,
+                contentType: "application/json",
+                dataType: 'json',
+                success: function (result) {
+                    psiValue = result.items[0].readings.psi_twenty_four_hourly
+                    console.log(result.items[0])
+
+                    let color_map = d3.scaleThreshold()
+                        .domain([10, 20, 30, 40, 50])
+                        .range(["#E0B0FF", "#C38EC7", "#B666D2", "#7F4E52", "#550A35"])
+
+                    var basemap = L.tileLayer('https://maps-{s}.onemap.sg/v3/Original/{z}/{x}/{y}.png', {
+                        detectRetina: true,
+                        maxZoom: 18,
+                        minZoom: 11,
+                        //Do not remove this attribution
+                        attribution: '<img src="https://www.onemap.gov.sg/docs/maps/images/oneMap64-01.png" style="height:20px;width:20px;"/> OneMap | Map data &copy; contributors, <a href="http://SLA.gov.sg">Singapore Land Authority</a>'
+                    });
+
+                    let map = new L.Map("map", {
+                        center: [1.3776586394322416, 103.84878699737104],
+                        zoom: 12,
+                        maxBounds: L.latLngBounds(L.latLng(1.1, 103.5), L.latLng(1.5, 104.3))
+                    })
+                        .addLayer(basemap);
+
+
+                    var westText = new L.divIcon({ className: 'class', html: '<span>' + psiValue.west + '</span>' });
+                    var eastText = new L.divIcon({ className: 'class', html: '<span>' + psiValue.east + '</span>' });
+                    var northText = new L.divIcon({ className: 'class', html: '<span>' + psiValue.north + '</span>' });
+                    var southText = new L.divIcon({ className: 'class', html: '<span>' + psiValue.south + '</span>' });
+                    var centreText = new L.divIcon({ className: 'class', html: '<span>' + psiValue.central + '</span>' });
+
+
+
+                    L.marker([1.35735, 103.94], { icon: eastText }).addTo(map);
+                    L.marker([1.41803, 103.82], { icon: northText }).addTo(map);
+                    L.marker([1.29587, 103.82], { icon: southText }).addTo(map);
+                    L.marker([1.35735, 103.7], { icon: westText }).addTo(map);
+                    L.marker([1.35735, 103.82], { icon: centreText }).addTo(map);
+
+
+                    var circleNorth = L.circle([1.41803, 103.82], {
+                        color: color_map(psiValue.north),
+                        fillColor: color_map(psiValue.north),
+                        fillOpacity: 0.5,
+                        radius: 1500,
+                    }).addTo(map);
+
+                    var circleWest = L.circle([1.35735, 103.7], {
+                        color: color_map(psiValue.west),
+                        fillColor: color_map(psiValue.west),
+                        fillOpacity: 0.5,
+                        radius: 1500,
+                    }).addTo(map);
+
+                    var circleEast = L.circle([1.35735, 103.94], {
+                        color: color_map(psiValue.east),
+                        fillColor: color_map(psiValue.east),
+                        fillOpacity: 0.5,
+                        radius: 1500,
+                    }).addTo(map);
+
+                    var circleSouth = L.circle([1.29587, 103.82], {
+                        color: color_map(psiValue.south),
+                        fillColor: color_map(psiValue.south),
+                        fillOpacity: 0.5,
+                        radius: 1500,
+                    }).addTo(map);
+
+
+                    var circleCentre = L.circle([1.35735, 103.82], {
+                        color: color_map(psiValue.central),
+                        fillColor: color_map(psiValue.central),
+                        fillOpacity: 0.5,
+                        radius: 1500,
+                    }).addTo(map);
+
+                }
+            })
         });
-    
-      let map = new L.Map("map", {
-        center: [1.347833, 103.809357], 
-        zoom: 11,
-        maxBounds: L.latLngBounds(L.latLng(1.1, 103.5), L.latLng(1.5, 104.3))
-        })
-        .addLayer(basemap);
+
+
     </script>
 </body>
 
